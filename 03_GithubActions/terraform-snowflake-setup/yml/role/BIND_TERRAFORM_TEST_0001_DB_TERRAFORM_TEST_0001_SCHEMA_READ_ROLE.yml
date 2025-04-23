@@ -1,0 +1,5 @@
+bind_role: 
+    database_name: TERRAFORM_TEST_0001_DB
+    schema_name: TERRAFORM_TEST_0001_SCHEMA
+    comment: "Terraformテスト用BINDロール"
+    create_role: True

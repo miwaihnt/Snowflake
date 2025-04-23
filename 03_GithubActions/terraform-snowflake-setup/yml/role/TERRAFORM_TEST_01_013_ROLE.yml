@@ -1,0 +1,37 @@
+system_role: 
+    system_name: TERRAFORM_TEST_SYS03
+    comment: Terraformテスト1-13用ロール
+    create_role: True
+    database_priv:
+      - database_name: TERRAFORM_TEST_01_DB
+        priv_type: [USAGE]
+    warehouse_priv: 
+      - warehouse_name: TERRAFORM_TEST_01_WH
+        priv_type: [USAGE]
+    resource_monitor_priv: 
+      - resource_monitor_name: TERRAFORM_TEST_01_RM
+        priv_type: [MONITOR]
+    schema_priv: 
+      - schema_name: TERRAFORM_TEST_01_DB.TERRAFORM_TEST_01_SCHEMA
+        priv_type: [USAGE]
+      - database_name: TERRAFORM_TEST_01_DB
+        priv_type: [USAGE]
+        all_option: True
+        future_option: True
+    schema_object_priv: 
+      - object_type: TABLE
+        object_name: TERRAFORM_TEST_01_DB.TERRAFORM_TEST_01_SCHEMA.TBL_TERRAFORM_TEST_01
+        priv_type: [SELECT]
+      - object_type: [TABLES]
+        schema_name: TERRAFORM_TEST_01_DB.TERRAFORM_TEST_01_SCHEMA
+        priv_type: [SELECT]
+        all_option: True
+        future_option: True
+      - object_type: [TABLES]
+        database_name: TERRAFORM_TEST_01_DB
+        priv_type: [SELECT]
+        all_option: True
+        future_option: True
+    parent_role: [TERRAFORM_TEST_PARENT_ROLE]
+    global_priv: [EXECUTE TASK]
+

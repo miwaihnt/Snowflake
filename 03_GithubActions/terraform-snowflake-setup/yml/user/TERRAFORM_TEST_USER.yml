@@ -1,0 +1,14 @@
+user: 
+    name: TERRAFORM_TEST_USER
+    default_warehouse: TERRAFORM_TEST_01_WH
+    default_namespace: TERRAFORM_TEST_0001_DB
+    default_role: TERRAFORM_TEST_ROLE
+    default_secondary_roles: 'ALL' 
+    rsa_public_key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApi7SzN+X+l4lZEkIClWf z1LFs5fRHJ/C91zZ/12X/Mpimc2JA63Teyn+AkYoMNXc27PgL8xXWx3CBO7bFOo2 C1mjJQXnICJMFaW4jlINLfKASBxwIExyewVWCyw30SQ7G3pSqRfb7L58wEOoS8a7 Py0N/GaxQEVzJu695a+Hif+O91rt1xCl7Xh2+5Fy4XEKpejiczjwzibIBClT08GL d8y4EiG7YnpiQHIYq0Qxr4iD8QwPPEf22Zpj1uAoGJ9cWdyMQUoYI66scvV6TKWJ njddNuSZkz8Vij5Ie/JLs14GezATivy2Zt5ETvUP4U6ejI5eQCa0s8I7zhUQZ6QK lQIDAQAC'
+    rsa_public_key_2: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApi7SzN+X+l4lZEkIClWf z1LFs5fRHJ/C91zZ/12X/Mpimc2JA63Teyn+AkYoMNXc27PgL8xXWx3CBO7bFOo2 C1mjJQXnICJMFaW4jlINLfKASBxwIExyewVWCyw30SQ7G3pSqRfb7L58wEOoS8a7 Py0N/GaxQEVzJu695a+Hif+O91rt1xCl7Xh2+5Fy4XEKpejiczjwzibIBClT08GL d8y4EiG7YnpiQHIYq0Qxr4iD8QwPPEf22Zpj1uAoGJ9cWdyMQUoYI66scvV6TKWJ njddNuSZkz8Vij5Ie/JLs14GezATivy2Zt5ETvUP4U6ejI5eQCa0s8I7zhUQZ6QK lQIDAQAC'
+    network_policy: TERRAFORM_NW
+    statement_timeout_in_seconds: 10000
+    client_session_keep_alive: True
+    comment: "Terrformテスト用ユーザ"
+    create_user: True
+    granted_role: [TERRAFORM_TEST_ROLE]

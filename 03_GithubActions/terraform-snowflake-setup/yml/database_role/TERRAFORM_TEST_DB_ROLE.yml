@@ -1,0 +1,21 @@
+database_role: 
+    name: TERRAFORM_TEST_DB_ROLE
+    database_name: TERRAFORM_TEST_0001_DB
+    comment: "Terraformテスト用DBロール"
+    create_role: True
+    database_priv: 
+      - database_name: TERRAFORM_TEST_0001_DB
+        priv_type: [USAGE]
+    schema_priv: 
+      - schema_name: TERRAFORM_TEST_0001_DB.TERRAFORM_TEST_0001_SCHEMA
+        priv_type: [USAGE]
+    schema_object_priv: 
+      - object_type: [TABLES]
+        schema_name: TERRAFORM_TEST_0001_DB.TERRAFORM_TEST_0001_SCHEMA
+        priv_type: [SELECT]
+        future_option: True
+        all_option: True
+      - object_type: TABLE
+        object_name: TERRAFORM_TEST_0001_DB.TERRAFORM_TEST_0001_SCHEMA.TBL_TERRAFORM_TEST_0001_0001_0001
+        priv_type: [SELECT]
+    parent_role: [TERRAFORM_TEST_PARENT_ROLE]

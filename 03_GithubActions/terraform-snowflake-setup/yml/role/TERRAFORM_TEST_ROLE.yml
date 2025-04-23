@@ -1,0 +1,27 @@
+role: 
+    name: TERRAFORM_TEST_ROLE
+    comment: "Terraformテスト用ロール"
+    create_role: True
+    database_priv: 
+      - database_name: TERRAFORM_TEST_0001_DB
+        priv_type: [USAGE]
+    schema_priv: 
+      - schema_name: MANAGEMENT_DB.OPERATION_SCHEMA
+        priv_type: [USAGE]
+      - database_name: MANAGEMENT_DB
+        priv_type: [USAGE]
+        future_option: True
+        all_option: True
+    schema_object_priv: 
+      - object_type: [PROCEDURES]
+        schema_name: MANAGEMENT_DB.OPERATION_SCHEMA
+        priv_type: [USAGE]
+        future_option: True
+        all_option: True
+      - object_type: [TABLES]
+        database_name: MANAGEMENT_DB
+        priv_type: [SELECT]
+        future_option: True
+        all_option: True
+    parent_role: [TERRAFORM_TEST_PARENT_ROLE]
+    global_priv: [EXECUTE TASK]

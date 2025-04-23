@@ -1,0 +1,4 @@
+system_role: 
+    system_name: TERRAFORM_TEST_01
+    comment: "Terraformテスト用システムロール"
+    create_role: True

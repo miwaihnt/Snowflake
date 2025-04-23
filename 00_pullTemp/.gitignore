@@ -1,0 +1,6 @@
+# Snowsight metadata files
+*_metadata.json
+
+# Mac のゴミファイルも無視
+.DS_Store
+
