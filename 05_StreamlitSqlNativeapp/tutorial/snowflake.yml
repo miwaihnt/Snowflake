@@ -1,0 +1,23 @@
+definition_version: 2
+entities:
+  pkg:
+    type: application package
+    identifier: <% fn.concat_ids('streamlit_sql_native_app_pkg', ctx.env.suffix) %>
+    artifacts:
+      - src: app/*
+        dest: ./
+      - src: streamlit/streamlit_app.py
+        dest: ./ 
+      - src: streamlit/resources/sql1.py
+        dest: resources/sql1.py
+      - src: streamlit/resources/sql2_3.py
+        dest: resources/sql2_3.py
+  app:
+    type: application
+    from:
+      target: pkg
+    identifier: <% fn.concat_ids('streamlit_sql_native_app', ctx.env.suffix) %>
+
+env:
+  suffix: <% fn.concat_ids('_', fn.sanitize_id(fn.get_username('unknown_user')) | lower) %>
+

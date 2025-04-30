@@ -1,0 +1,1 @@
+/Users/miwanoshuuhei/git/03_snowflake/05_StreamlitSqlNativeapp/tutorial/app/setup_script.sql
