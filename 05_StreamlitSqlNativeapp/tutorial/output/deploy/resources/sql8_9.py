@@ -1,0 +1,1 @@
+/Users/miwanoshuuhei/git/03_snowflake/05_StreamlitSqlNativeapp/tutorial/streamlit/resources/sql8_9.py
