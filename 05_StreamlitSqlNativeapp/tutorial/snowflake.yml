@@ -1,9 +1,10 @@
 definition_version: 2
 entities:
-  pkg:
-    type: application package
-    identifier: <% fn.concat_ids('streamlit_sql_native_app_pkg', ctx.env.suffix) %>
-    artifacts:
+   cost_estimate_package:
+      type: application package
+      stage: stage_content.hello_snowflake_stage
+      manifest: app/manifest.yml
+      artifacts:
       - src: app/*
         dest: ./
       - src: streamlit/streamlit_app.py
@@ -32,13 +33,10 @@ entities:
         dest: resources/sql17.py
       - src: streamlit/resources/sql18.py
         dest: resources/sql18.py
-
-  app:
-    type: application
-    from:
-      target: pkg
-    identifier: <% fn.concat_ids('streamlit_sql_native_app', ctx.env.suffix) %>
-
+   cost_estimate:
+      type: application
+      from:
+         target: cost_estimate_package
+      debug: false
 env:
   suffix: <% fn.concat_ids('_', fn.sanitize_id(fn.get_username('unknown_user')) | lower) %>
-

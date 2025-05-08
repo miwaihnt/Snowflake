@@ -45,8 +45,6 @@ def get_filter_inputs(warehouse_name, key_suffix):
     return warehouse, begin_str, end_str
 
 # クエリ実行 sql2
-# 内部的にはUTCで比較されているっぽい？
-# and CONVERT_TIMEZONE('Asia/Tokyo', to_timestamp_ntz(START_TIME)) between '{begin_str}' AND '{end_str}'
 
 def execute_query2(warehouse, begin_str, end_str):  
     sql2 = f"""

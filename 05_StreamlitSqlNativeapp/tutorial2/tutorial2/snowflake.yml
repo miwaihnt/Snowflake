@@ -1,8 +1,8 @@
 definition_version: 2
 entities:
-   cost_estimate_package:
+   TEAT_PAC:
       type: application package
-      stage: stage_content.hello_snowflake_stage
+      stage: test1.stage1
       manifest: app/manifest.yml
       artifacts:
       - src: app/*
@@ -33,10 +33,10 @@ entities:
         dest: resources/sql17.py
       - src: streamlit/resources/sql18.py
         dest: resources/sql18.py
-   cost_estimate:
+   test_pac_app:
       type: application
       from:
-         target: cost_estimate_package
+         target: TEAT_PAC
       debug: false
 env:
   suffix: <% fn.concat_ids('_', fn.sanitize_id(fn.get_username('unknown_user')) | lower) %>

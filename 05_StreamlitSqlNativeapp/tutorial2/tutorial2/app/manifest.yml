@@ -1,6 +1,6 @@
 manifest_version: 1
 version:
-  name: cost_estimate
+  name: teat_pac_app
   patch: 0
   label: "v1.0"
   comment: "The first version of a Snowflake Native App"
@@ -12,5 +12,3 @@ privileges:
       description: "account_usage viewsを利用して各種クエリ履歴を確認する。"
    - MANAGE WAREHOUSES:
       description: "アプリケーションは利用可能なWarehouseをキーにクエリ履歴を絞り込む"
-
-
