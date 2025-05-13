@@ -1,0 +1,23 @@
+definition_version: 2
+entities:
+  sql_native_package:
+    type: application package
+    stage: stage_content.app_stage
+    manifest: app/manifest.yml
+    artifacts:
+      - src: app/*
+        dest: ./
+      - src: streamlit/streamlit_app.py
+        dest: ./
+      - src: streamlit/resources/sql1.py
+        dest: resources/sql1.py
+      - src: streamlit/environment.yml
+        dest: ./
+      - src: streamlit/resources/sql2_3.py
+        dest: resources/sql2_3.py
+
+  sql_native_app:
+    type: application
+    from:
+      target: sql_native_package
+    debug: false
