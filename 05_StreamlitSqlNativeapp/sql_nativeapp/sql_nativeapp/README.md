@@ -1,6 +1,6 @@
 ## Introduction
 
-This is the basic project template for a Snowflake Native App project. It contains minimal code meant to help you set up your first application object in your account quickly.
+This is the basic project template for a Snowflake Native App project. It contains minimal code meant to help you set up your first application object in your account quickly..
 
 ### Project Structure
 | File Name | Purpose |
