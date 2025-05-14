@@ -1,28 +1,23 @@
-# Import python packages
 import streamlit as st
 from snowflake.snowpark.context import get_active_session
-import pandas as pd
 
-# UI定義
-st.markdown("<h1 style='color:teal;'>WH設定</h1>", unsafe_allow_html=True)
-st.write("")
+# UI
+st.title("PythonストアドプロシージャでSHOW WAREHOUSES")
 
 # セッション取得
 session = get_active_session()
 
 def execute_proc():
-    # ストアドプロシージャの呼び出し
-    df = session.call("code_schema.sql1_proc")
-    
-    # データ表示
-    st.write(df)
+    try:
+        # Pythonストアドプロシージャを呼び出して結果をDataFrameで受け取る
+        df = session.call("code_schema.show_warehouse_proc")
+        st.dataframe(df)  # 横に広いので dataframe 推奨
 
-    # 実行SQLの表示
-    with st.expander("実行したSQL", expanded=False):
-        st.code("show warehouses;")
+        with st.expander("実行SQL", expanded=False):
+            st.code("CALL code_schema.show_warehouse_proc();")
+    except Exception as e:
+        st.error(f"エラーが発生しました: {e}")
 
-def main():
-    if st.button("クエリ実行"):
-        execute_proc()
-
-main()
+# ボタンで実行
+if st.button("クエリ実行"):
+    execute_proc()
