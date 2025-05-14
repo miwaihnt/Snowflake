@@ -7,7 +7,7 @@ import altair as alt
 session = get_active_session()
 
 # ウェアハウス一覧を取得
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def show_warehouses():
     # ストアドプロシージャの呼び出し
     df = session.call("code_schema.show_warehouse_proc")  # Snowpark DataFrame
@@ -53,14 +53,78 @@ def execute_query2(warehouse,begin_str, end_str):
         begin_str,
         end_str
     )
+
     rows = df_query2.collect()
+    df = pd.DataFrame([row.as_dict() for row in rows])
+    if df.empty:
+        st.warning("該当するデータが存在しませんでした。")
+        return
     st.write(rows)
+    df['SQL_COUNT'] = df['PERCENT_SQL_COUNT'].str.rstrip('%').astype(float)
+
+    spilled_size_order = [
+        "6: 1TB < LOCAL_SPILLED_SIZE", 
+        "5: 100GB < LOCAL_SPILLED_SIZE <= 1TB",
+        "4: 10GB < LOCAL_SPILLED_SIZE <= 100GB", 
+        "3: 1GB < LOCAL_SPILLED_SIZE <= 10GB", 
+        "2: 1MB < LOCAL_SPILLED_SIZE <= 1GB", 
+        "1: 0B < LOCAL_SPILLED_SIZE <= 1MB",   
+        "0: LOCAL_SPILLED_SIZE = 0B"
+    ]
+
+    bar_chart = alt.Chart(df).mark_bar().encode(
+        y=alt.Y('LOCAL_SPILLED_SIZE_RANGE', sort=spilled_size_order),
+        x=alt.X('SQL_COUNT'),
+        color='LOCAL_SPILLED_SIZE_RANGE',
+        tooltip=['LOCAL_SPILLED_SIZE_RANGE', 'SQL_COUNT']
+    ).properties(
+        title="ローカルスピルサイズ範囲ごとのSQL数"
+    )
+    
+    st.altair_chart(bar_chart, use_container_width=True)
+
+def execute_query3(warehouse,begin_str, end_str):
+
+    df_query3 = session.call(
+        "code_schema.localSpill2",
+        warehouse,
+        begin_str,
+        end_str
+    ) 
+
+    rows = df_query3.collect()
+    df = pd.DataFrame([row.as_dict() for row in rows])
+    if df.empty:
+        st.warning("該当するデータが存在しませんでした。")
+        return
+    st.write(rows)
+  
 
 def main2():
     df = show_warehouses()
-    stname = st.dataframe(df[["name"]])
     name = df["name"].tolist()
     warehouse, begin_str, end_str = get_filter_inputs(name, key_suffix="tab2")
-    st.write(warehouse,begin_str,end_str)
-  
-main2()
+
+    if st.button("クエリ実行", key="execute_query2"):
+        execute_query2(warehouse, begin_str, end_str)
+
+def main3():
+    df = show_warehouses()
+    name = df["name"].tolist()
+    warehouse, begin_str, end_str = get_filter_inputs(name, key_suffix="tab3")   
+    if st.button("クエリ実行", key="execute_query3"):
+        execute_query3(warehouse, begin_str, end_str)
+
+
+
+# タイトル表示
+st.markdown("<h1 style='color:teal;'>ローカルスピリング</h1>", unsafe_allow_html=True)
+
+# タブUI
+tab2, tab3 = st.tabs(["ローカルスピルサイズ範囲ごとのSQL数", "ローカルスピルが多いSQL"])
+with tab2:
+    st.markdown("### ローカルスピルサイズ範囲ごとのSQL数")
+    main2()
+with tab3:
+    st.markdown("### ローカルスピルが多いSQL")
+    main3()
