@@ -47,6 +47,7 @@ def get_filter_inputs(warehouse_name, key_suffix):
     return warehouse, begin_str, end_str
 
 def execute_query2(warehouse,begin_str, end_str):
+
     df_query2 = session.call(
         "code_schema.localSpill1",
         warehouse,
@@ -63,13 +64,14 @@ def execute_query2(warehouse,begin_str, end_str):
     df['SQL_COUNT'] = df['PERCENT_SQL_COUNT'].str.rstrip('%').astype(float)
 
     spilled_size_order = [
-        "6: 1TB < LOCAL_SPILLED_SIZE", 
-        "5: 100GB < LOCAL_SPILLED_SIZE <= 1TB",
-        "4: 10GB < LOCAL_SPILLED_SIZE <= 100GB", 
-        "3: 1GB < LOCAL_SPILLED_SIZE <= 10GB", 
-        "2: 1MB < LOCAL_SPILLED_SIZE <= 1GB", 
-        "1: 0B < LOCAL_SPILLED_SIZE <= 1MB",   
-        "0: LOCAL_SPILLED_SIZE = 0B"
+        "6: 1TB < REMOTE_SPILLED_SIZE",
+        "5: 100GB < REMOTE_SPILLED_SIZE <= 1TB",
+        "4: 10GB < REMOTE_SPILLED_SIZE <= 100GB", 
+        "3: 1GB < REMOTE_SPILLED_SIZE <= 10GB", 
+        "2: 1MB < REMOTE_SPILLED_SIZE <= 1GB", 
+        "1: 0B < REMOTE_SPILLED_SIZE <= 1MB",   
+        "0: REMOTE_SPILLED_SIZE = 0B"        
+
     ]
 
     bar_chart = alt.Chart(df).mark_bar().encode(
@@ -99,11 +101,11 @@ def execute_query2(warehouse,begin_str, end_str):
         COUNT(CASE WHEN BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024/1024/1024 > 1 THEN 1 END) AS "6: 1TB < LOCAL_SPILLED_SIZE"
         FROM snowflake.account_usage.query_history
         WHERE execution_status = 'SUCCESS'
-        AND warehouse_name = :warehouse
+        AND warehouse_name = '{warehouse}'
         AND warehouse_size IS NOT NULL
         AND BYTES_SCANNED > 0
         AND CONVERT_TIMEZONE('Asia/Tokyo', TO_TIMESTAMP_NTZ(START_TIME)) 
-            BETWEEN :begin_str AND :end_str
+            BETWEEN '{begin_str}' AND '{end_str}'
         GROUP BY ALL
     )
     UNPIVOT (
@@ -126,13 +128,14 @@ def execute_query2(warehouse,begin_str, end_str):
     SQL_COUNT,
     round(sql_count / total_count_sql * 100, 2) || '%' as PERCENT_SQL_COUNT
     FROM sqlcnt_per_lspilled
-    """
+    """.format(warehouse=warehouse, begin_str=begin_str, end_str=end_str)
 
     with st.expander("実行されたクエリを表示", expanded=False):
         st.code(query_text_sql2, language="sql")
 
 
 def execute_query3(warehouse,begin_str, end_str):
+
 
     df_query3 = session.call(
         "code_schema.localSpill2",
@@ -147,7 +150,34 @@ def execute_query3(warehouse,begin_str, end_str):
         st.warning("該当するデータが存在しませんでした。")
         return
     st.write(rows)
-  
+
+
+    query_text_sql3 = """
+    select
+        warehouse_name,
+        warehouse_size,
+        query_id,
+        query_text,
+        CONVERT_TIMEZONE('Asia/Tokyo',to_timestamp_ntz(START_TIME)) start_time,
+        BYTES_SPILLED_TO_LOCAL_STORAGE,
+        round(BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024/1024,2) BYTES_SPILLED_TO_LOCAL_STORAGE_GB,
+        BYTES_SPILLED_TO_REMOTE_STORAGE,
+        round(BYTES_SPILLED_TO_REMOTE_STORAGE/1024/1024/1024,2) BYTES_SPILLED_TO_REMOTE_STORAGE_GB
+    from
+        snowflake.account_usage.query_history
+    where
+        execution_status = 'SUCCESS'
+    and warehouse_name = '{warehouse}'
+    and warehouse_size is not null
+    and CONVERT_TIMEZONE('Asia/Tokyo',to_timestamp_ntz(START_TIME)) between '{begin_str}' AND '{end_str}'
+    and BYTES_SPILLED_TO_LOCAL_STORAGE > 0
+    order by BYTES_SPILLED_TO_LOCAL_STORAGE desc;
+""".format(warehouse=warehouse, begin_str=begin_str, end_str=end_str)
+
+
+    with st.expander("実行されたクエリを表示", expanded=False):
+        st.code(query_text_sql3, language="sql")
+
 
 def main2():
     df = show_warehouses()
