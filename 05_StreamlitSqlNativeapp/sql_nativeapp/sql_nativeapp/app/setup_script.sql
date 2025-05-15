@@ -45,7 +45,7 @@ def main(session):
 $$;
 
 //プロシージャsshow_warehouseの権限付与
-GRANT USAGE ON PROCEDURE code_schema.show_warehouse_proc() TO APPLICATION ROLE func_cost_estimate;
+GRANT USAGE ON PROCEDURE code_schema.show_warehouse_proc() TO APPLICATION ROLE sql_native_app;
 
 //プロシージャ(ローカルスピルサイズ範囲ごとのSQL数)
 CREATE OR REPLACE PROCEDURE code_schema.localSpill1(
@@ -276,3 +276,116 @@ BEGIN
 END;
 
 GRANT USAGE ON PROCEDURE code_schema.localSpill4(STRING,STRING,STRING) TO APPLICATION ROLE sql_native_app;
+
+
+
+//キュー待ち発生状況
+CREATE OR REPLACE PROCEDURE code_schema.localSpill5(
+  warehouse STRING,
+  begin_str STRING,
+  end_str STRING
+)
+RETURNS TABLE(
+  WAREHOUSE_NAME STRING,
+  WAREHOUSE_SIZE STRING,
+  TOTAL_COUNT_SQL NUMBER,
+  QUEUED_PERCENT_RANGE STRING,
+  SQL_COUNT NUMBER,
+  PERCENT_SQL_COUNT STRING
+)
+LANGUAGE SQL
+AS
+DECLARE
+  res RESULTSET DEFAULT (
+    WITH sqlcnt_per_queued_percent AS (
+      SELECT * FROM (
+        SELECT
+          warehouse_name,
+          warehouse_size,
+          COUNT(*) total_count_sql,
+          COUNT(CASE WHEN (QUEUED_OVERLOAD_TIME / total_elapsed_time) = 0 THEN 1 ELSE NULL END)                                                               AS "0: ELAPSED_TIME_QUEUED% = 0%",
+          COUNT(CASE WHEN (QUEUED_OVERLOAD_TIME / total_elapsed_time) > 0      and (QUEUED_OVERLOAD_TIME / total_elapsed_time) <= 0.01 THEN 1 ELSE NULL END)  AS "1: 0% < ELAPSED_TIME_QUEUED% <= 1%",
+          COUNT(CASE WHEN (QUEUED_OVERLOAD_TIME / total_elapsed_time) > 0.01   and (QUEUED_OVERLOAD_TIME / total_elapsed_time) <= 0.05 THEN 1 ELSE NULL END)  AS "2: 1% < ELAPSED_TIME_QUEUED% <= 5%",
+          COUNT(CASE WHEN (QUEUED_OVERLOAD_TIME / total_elapsed_time) > 0.05   and (QUEUED_OVERLOAD_TIME / total_elapsed_time) <= 0.2 THEN 1 ELSE NULL END)   AS "3: 5% < ELAPSED_TIME_QUEUED% <= 20%",
+          COUNT(CASE WHEN (QUEUED_OVERLOAD_TIME / total_elapsed_time) > 0.2    and (QUEUED_OVERLOAD_TIME / total_elapsed_time) <= 0.5 THEN 1 ELSE NULL END)   AS "4: 20% < ELAPSED_TIME_QUEUED% <= 50%",
+          COUNT(CASE WHEN (QUEUED_OVERLOAD_TIME / total_elapsed_time) > 0.5 THEN 1 ELSE NULL END)                                                             AS "5: 50% < ELAPSED_TIME_QUEUED%" 
+       FROM snowflake.account_usage.query_history
+        WHERE execution_status = 'SUCCESS'
+        AND warehouse_name = :warehouse
+        AND warehouse_size IS NOT NULL
+        AND CONVERT_TIMEZONE('Asia/Tokyo', TO_TIMESTAMP_NTZ(START_TIME)) 
+              BETWEEN :begin_str AND :end_str
+        GROUP BY ALL
+      )
+      UNPIVOT (
+        sql_count FOR queued_percent_range IN (
+        "0: ELAPSED_TIME_QUEUED% = 0%",
+        "1: 0% < ELAPSED_TIME_QUEUED% <= 1%",
+        "2: 1% < ELAPSED_TIME_QUEUED% <= 5%",
+        "3: 5% < ELAPSED_TIME_QUEUED% <= 20%",
+        "4: 20% < ELAPSED_TIME_QUEUED% <= 50%",
+        "5: 50% < ELAPSED_TIME_QUEUED%"        
+        )
+      )
+    )
+    SELECT 
+      WAREHOUSE_NAME,
+      WAREHOUSE_SIZE,
+      TOTAL_COUNT_SQL,
+      QUEUED_PERCENT_RANGE,
+      SQL_COUNT,
+      round(sql_count / total_count_sql * 100, 2) || '%' as PERCENT_SQL_COUNT
+    FROM sqlcnt_per_queued_percent
+  );
+BEGIN
+  RETURN TABLE(res);
+END;
+
+GRANT USAGE ON PROCEDURE code_schema.localSpill5(STRING,STRING,STRING) TO APPLICATION ROLE sql_native_app;
+
+
+
+//プロシージャ定義リモートスピル発生量が多いSQL
+CREATE OR REPLACE PROCEDURE code_schema.localSpill6(
+  warehouse STRING,
+  begin_str STRING,
+  end_str STRING
+)
+RETURNS TABLE(
+  WAREHOUSE_NAME STRING,
+  WAREHOUSE_SIZE STRING,
+  QUERY_ID STRING,
+  QUERY_TEXT STRING,
+  START_TIME TIMESTAMP_TZ,
+  ELAPSED_TIME_S NUMBER,
+  QUEUED_TIME_S NUMBER,
+  PERCENT_QUEUED STRING
+)
+LANGUAGE SQL
+AS
+DECLARE
+  res RESULTSET DEFAULT (
+     select
+        warehouse_name,
+        warehouse_size,
+        query_id,
+        query_text,
+        CONVERT_TIMEZONE('Asia/Tokyo',to_timestamp_ntz(START_TIME)) start_time,
+        round(total_elapsed_time/1000,2) elapsed_time_s,
+        round(QUEUED_OVERLOAD_TIME/1000,2) queued_time_s,
+        round(QUEUED_OVERLOAD_TIME/total_elapsed_time * 100,2) || '%' as "PERCENT_QUEUED",
+    from
+        snowflake.account_usage.query_history
+    where
+        execution_status = 'SUCCESS'
+    and warehouse_name = :warehouse
+    and warehouse_size is not null
+    and CONVERT_TIMEZONE('Asia/Tokyo',to_timestamp_ntz(START_TIME)) BETWEEN :begin_str AND :end_str
+    and queued_time_s > 0    
+    order by queued_time_s desc
+    );
+BEGIN
+  RETURN TABLE(res);
+END;
+
+GRANT USAGE ON PROCEDURE code_schema.localSpill6(STRING,STRING,STRING) TO APPLICATION ROLE sql_native_app;

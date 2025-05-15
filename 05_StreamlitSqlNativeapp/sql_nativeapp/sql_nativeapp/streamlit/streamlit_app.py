@@ -11,7 +11,11 @@ pages = {
       "スピリング":[
         st.Page("./resources/sql2_3.py",title="ローカルスピル"),
         st.Page("./resources/sql4_5.py",title="リモートスピル")
-      ]
+      ],
+      "クエリ負荷":[
+        st.Page("./resources/sql6_7.py",title="キュー待ち"),
+        st.Page("./resources/sql8_9.py",title="トランザクションブロック")
+      ]      
     
 }
 
