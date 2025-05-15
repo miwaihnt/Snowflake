@@ -6,6 +6,8 @@ For more information about a Snowflake Native App, please read the [official Sno
 
 - 課題
   - st.expnaderでsqlベタ打ちが必要かも
+  - streamlit側からはsessionアクセスはできなそう
+  - query historyもマスキングされているっぽい
 
 ## Using the application after installation
 To interact with the application after it has successfully installed in your account, switch to the application owner role first.

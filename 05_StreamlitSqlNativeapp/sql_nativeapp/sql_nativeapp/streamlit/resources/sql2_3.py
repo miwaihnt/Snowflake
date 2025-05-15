@@ -83,6 +83,55 @@ def execute_query2(warehouse,begin_str, end_str):
     
     st.altair_chart(bar_chart, use_container_width=True)
 
+    query_text_sql2 = """
+    WITH sqlcnt_per_lspilled AS (
+    SELECT * FROM (
+        SELECT
+        warehouse_name,
+        warehouse_size,
+        COUNT(*) total_count_sql,
+        COUNT(CASE WHEN BYTES_SPILLED_TO_LOCAL_STORAGE = 0 THEN 1 END) AS "0: LOCAL_SPILLED_SIZE = 0B", 
+        COUNT(CASE WHEN BYTES_SPILLED_TO_LOCAL_STORAGE > 0 AND BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024 <= 1 THEN 1 END) AS "1: 0B < LOCAL_SPILLED_SIZE <= 1MB",
+        COUNT(CASE WHEN BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024 > 1 AND BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024/1024 <= 1 THEN 1 END) AS "2: 1MB < LOCAL_SPILLED_SIZE <= 1GB", 
+        COUNT(CASE WHEN BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024/1024 > 1 AND BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024/1024 <= 10 THEN 1 END) AS "3: 1GB < LOCAL_SPILLED_SIZE <= 10GB", 
+        COUNT(CASE WHEN BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024/1024 > 10 AND BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024/1024 <= 100 THEN 1 END) AS "4: 10GB < LOCAL_SPILLED_SIZE <= 100GB", 
+        COUNT(CASE WHEN BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024/1024 > 100 AND BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024/1024/1024 <= 1 THEN 1 END) AS "5: 100GB < LOCAL_SPILLED_SIZE <= 1TB",
+        COUNT(CASE WHEN BYTES_SPILLED_TO_LOCAL_STORAGE/1024/1024/1024/1024 > 1 THEN 1 END) AS "6: 1TB < LOCAL_SPILLED_SIZE"
+        FROM snowflake.account_usage.query_history
+        WHERE execution_status = 'SUCCESS'
+        AND warehouse_name = :warehouse
+        AND warehouse_size IS NOT NULL
+        AND BYTES_SCANNED > 0
+        AND CONVERT_TIMEZONE('Asia/Tokyo', TO_TIMESTAMP_NTZ(START_TIME)) 
+            BETWEEN :begin_str AND :end_str
+        GROUP BY ALL
+    )
+    UNPIVOT (
+        sql_count FOR LOCAL_SPILLED_SIZE_RANGE IN (
+        "0: LOCAL_SPILLED_SIZE = 0B", 
+        "1: 0B < LOCAL_SPILLED_SIZE <= 1MB",   
+        "2: 1MB < LOCAL_SPILLED_SIZE <= 1GB", 
+        "3: 1GB < LOCAL_SPILLED_SIZE <= 10GB", 
+        "4: 10GB < LOCAL_SPILLED_SIZE <= 100GB", 
+        "5: 100GB < LOCAL_SPILLED_SIZE <= 1TB",
+        "6: 1TB < LOCAL_SPILLED_SIZE"
+        )
+    )
+    )
+    SELECT 
+    WAREHOUSE_NAME,
+    WAREHOUSE_SIZE,
+    TOTAL_COUNT_SQL,
+    LOCAL_SPILLED_SIZE_RANGE,
+    SQL_COUNT,
+    round(sql_count / total_count_sql * 100, 2) || '%' as PERCENT_SQL_COUNT
+    FROM sqlcnt_per_lspilled
+    """
+
+    with st.expander("実行されたクエリを表示", expanded=False):
+        st.code(query_text_sql2, language="sql")
+
+
 def execute_query3(warehouse,begin_str, end_str):
 
     df_query3 = session.call(
@@ -114,8 +163,6 @@ def main3():
     warehouse, begin_str, end_str = get_filter_inputs(name, key_suffix="tab3")   
     if st.button("クエリ実行", key="execute_query3"):
         execute_query3(warehouse, begin_str, end_str)
-
-
 
 # タイトル表示
 st.markdown("<h1 style='color:teal;'>ローカルスピリング</h1>", unsafe_allow_html=True)
